@@ -46,7 +46,7 @@ std::string GetLevelName() {
 	std::map<LevelIDs, std::string> idToName = { {LevelIDs_WildCanyon, "Wild Canyon"}, {LevelIDs_PumpkinHill, "Pumpkin Hill"},
 		{LevelIDs_AquaticMine, "Aquatic Mine"}, {LevelIDs_DeathChamber, "Death Chamber"}, {LevelIDs_MeteorHerd, "Meteor Herd"},
 		{LevelIDs_DryLagoon, "Dry Lagoon"}, {LevelIDs_EggQuarters, "Egg Quarters"}, {LevelIDs_SecurityHall, "Security Hall"}, {LevelIDs_MadSpace, "Mad Space"} };
-	PrintDebug("[Hunting Data Collection] GetLevelName: %s", idToName.at((LevelIDs)CurrentLevel).c_str());
+
 	return idToName.at((LevelIDs)CurrentLevel) + IsNG();
 }
 
