@@ -6,6 +6,7 @@
 #include "StateMachine.h"
 
 #include <algorithm>
+#include <fstream>
 #include <map>
 #include <vector>
 
@@ -77,6 +78,7 @@ char *LevelEnd = (char *)0x174B002;
 char *PopupMenus = (char *)0x021F0014;
 
 static SM oldstate;
+std::fstream fs;
 
 extern "C"
 {
@@ -86,6 +88,8 @@ extern "C"
 		// This is where we override functions, replace static data, etc.
 		data = new Data();
 		oldstate = SM::WaitLevel;
+
+		fs = std::fstream(std::string(path) + "\\hunting_data.csv", std::ios::out | std::ios::app);
 	}
 
 	__declspec(dllexport) void __cdecl OnFrame()
@@ -224,6 +228,8 @@ extern "C"
 
 				data->finished = PieceTimes{
 					GetIL(), frameTimeIGT, frameTimeV1, frameTimeV2_5, TimesRestartedOrDied };
+
+				fs << *data << std::endl;
 
 				nextstate = SM::WaitExit;
 				break;
