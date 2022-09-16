@@ -70,9 +70,14 @@ extern "C"
 	{
 		static SM state = SM::WaitLevel;
 		SM nextstate;
+		static int oldFrameCount = 0;
+		static int frameTime = 0;
+		static int newFrameTime = 0;
 
 		switch (state) {
 			case SM::WaitLevel: {
+				frameTime = 0;
+				newFrameTime = 0;
 				if (IsHuntingStage()) {
 					PrintDebug("[Hunting Data Collection] Is hunting stage\n");
 					nextstate = SM::WaitLoadRestart;
@@ -103,6 +108,9 @@ extern "C"
 					nextstate = SM::Record;
 				}
 
+				frameTime += (FrameCount - oldFrameCount);
+				newFrameTime += FrameIncrement;
+
 				// Menu Exit
 				if ((GameStates)GameState == GameStates_Inactive) {
 					nextstate = SM::WaitExit;
@@ -113,6 +121,21 @@ extern "C"
 				break;
 			}
 			case SM::Record: {
+				double ms_tmp = frameTime * 5.0 / 0.3;
+				int sec = ((int)ms_tmp / 1000) % 60;
+				int min = ((int)ms_tmp / (1000 * 60)) % 60;
+				int ms = (int)ms_tmp % 1000;
+
+				PrintDebug("[Hunting Data Collection] Stage time: %02d:%02d.%03d", min, sec, ms);
+
+				ms_tmp = newFrameTime * 5.0 / 0.3;
+				sec = ((int)ms_tmp / 1000) % 60;
+				min = ((int)ms_tmp / (1000 * 60)) % 60;
+				ms = (int)ms_tmp % 1000;
+
+				PrintDebug("[Hunting Data Collection] Stage time v2: %02d:%d.%03d", min, sec, ms);
+
+				PrintDebug("[Hunting Data Collection] IGT: %d:%d.%d", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
 
 				nextstate = SM::WaitExit;
 				break;
@@ -129,6 +152,7 @@ extern "C"
 		}
 		oldstate = state;
 		state = nextstate;
+		oldFrameCount = FrameCount;
 	}
 
 	__declspec(dllexport) void __cdecl OnInput()
