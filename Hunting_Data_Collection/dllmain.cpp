@@ -68,6 +68,9 @@ inline void PrintIL() {
 	PrintDebug("[Hunting Data Collection] %02d:%02d.%03d IL", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
 }
 
+inline int GetIL() {
+	return 3600 * (int)TimerMinutes + 60 * (int)TimerSeconds + TimerFrames;
+}
 
 static Data *data;
 char *LevelEnd = (char *)0x174B002;
@@ -159,6 +162,12 @@ extern "C"
 						PrintTime(frameTimeV1, "V1");
 						PrintTime(frameTimeV2_5, "V2.5");
 
+						// -1 for IL because pieces there's an off-by-one
+						// when collecting them. Probably something with
+						// where the mod runs?
+						data->pieces[i] = oldemeralds[i];
+						data->collected[i] = PieceTimes{
+							GetIL()-1, frameTimeIGT, frameTimeV1, frameTimeV2_5, TimesRestartedOrDied };
 
 					}
 					oldemeralds[i] = getEmeraldId(i);
@@ -212,6 +221,9 @@ extern "C"
 				PrintTime(frameTimeIGT, "IGT");
 				PrintTime(frameTimeV1, "V1");
 				PrintTime(frameTimeV2_5, "V2.5");
+
+				data->finished = PieceTimes{
+					GetIL(), frameTimeIGT, frameTimeV1, frameTimeV2_5, TimesRestartedOrDied };
 
 				nextstate = SM::WaitExit;
 				break;
