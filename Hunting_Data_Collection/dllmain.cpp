@@ -74,6 +74,7 @@ extern "C"
 		switch (state) {
 			case SM::WaitLevel: {
 				if (IsHuntingStage()) {
+					PrintDebug("[Hunting Data Collection] Is hunting stage\n");
 					nextstate = SM::WaitLoadRestart;
 				}
 				else {
@@ -86,7 +87,7 @@ extern "C"
 				// If we restart, we update the name
 				if (oldstate != SM::WaitLoadRestart) {
 					data->stageName = GetLevelName();
-					PrintDebug("[Hunting Data Collection] Stage: %s\n", data->stageName);
+					PrintDebug("[Hunting Data Collection] Stage: %s\n", data->stageName.c_str());
 				}
 				break;
 			}
