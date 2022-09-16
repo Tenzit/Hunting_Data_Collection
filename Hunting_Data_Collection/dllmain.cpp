@@ -1,7 +1,57 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
+#include "CastVars.h"
+#include "DataClass.h"
+#include "SA2Enums.h"
 #include "StateMachine.h"
+
+#include <algorithm>
+#include <map>
+#include <set>
+
+bool IsHuntingStage() {
+	std::set<LevelIDs> huntingStages = { LevelIDs_WildCanyon, LevelIDs_PumpkinHill, LevelIDs_AquaticMine, LevelIDs_DeathChamber, LevelIDs_MeteorHerd,
+		LevelIDs_DryLagoon, LevelIDs_EggQuarters, LevelIDs_SecurityHall, LevelIDs_MadSpace };
+	if (huntingStages.find(*CurrentLevelE) != huntingStages.end()) {
+		return true;
+	}
+	return false;
+}
+
+std::string IsNG() {
+	auto check = [](bool upgrade) { return (upgrade) ? " NG+" : " NG"; };
+
+	switch (*CurrentLevelE) {
+		case LevelIDs_PumpkinHill: {
+			return check(KnucklesShovelClawGot);
+		}
+		case LevelIDs_DeathChamber: {
+			return check(KnucklesHammerGlovesGot);
+		}
+		case LevelIDs_EggQuarters: {
+			return check(RougePickNailsGot);
+		}
+		case LevelIDs_MadSpace: {
+			return check(RougeIronBootsGot);
+		}
+		default: {
+			return "";
+		}
+	}
+}
+
+std::string GetLevelName() {
+	// There's totally a better way to do this lol
+	// Probably with a macro I'm betting
+	std::map<LevelIDs, std::string> idToName = { {LevelIDs_WildCanyon, "Wild Canyon"}, {LevelIDs_PumpkinHill, "Pumpkin Hill"},
+		{LevelIDs_AquaticMine, "Aquatic Mine"}, {LevelIDs_DeathChamber, "Death Chamber"}, {LevelIDs_MeteorHerd, "Meteor Herd"},
+		{LevelIDs_DryLagoon, "Dry Lagoon"}, {LevelIDs_EggQuarters, "Egg Quarters"}, {LevelIDs_SecurityHall, "Security Hall"}, {LevelIDs_MadSpace, "Mad Space"} };
+
+	return idToName[*CurrentLevelE] + IsNG();
+}
+
+static Data *data;
 
 extern "C"
 {
@@ -9,18 +59,30 @@ extern "C"
 	{
 		// Executed at startup, contains helperFunctions and the path to your mod (useful for getting the config file.)
 		// This is where we override functions, replace static data, etc.
+		data = new Data();
 	}
 
 	__declspec(dllexport) void __cdecl OnFrame()
 	{
 		static SM state = SM::WaitLevel;
+		SM oldstate = state;
 
 		switch (state) {
 			case SM::WaitLevel: {
-
+				if (IsHuntingStage()) {
+					state = SM::WaitLoadRestart;
+				}
+				else {
+					state = SM::WaitLevel;
+				}
 			}
 			case SM::WaitLoadRestart: {
-
+				// Get name of stage we're loading into
+				// If we restart, we update the name
+				if (oldstate != SM::WaitLoadRestart) {
+					data->stageName = GetLevelName();
+					PrintDebug("[Hunting Data Collection] Stage: %s\n", data->stageName);
+				}
 			}
 			case SM::Time: {
 
