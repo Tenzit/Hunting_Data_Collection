@@ -50,6 +50,11 @@ std::string GetLevelName() {
 	return idToName.at((LevelIDs)CurrentLevel) + IsNG();
 }
 
+// Don't index > 2 dumbass
+uint32_t getEmeraldId(int idx) {
+	return *(uint32_t *)&EmeraldManagerObj2->byte2C[idx];
+}
+
 static Data *data;
 char *LevelEnd = (char *)0x174B002;
 char *PopupMenus = (char *)0x021F0014;
@@ -98,6 +103,7 @@ extern "C"
 
 				if (ControllersEnabled && ((GameStates)GameState == GameStates_Ingame)) {
 					nextstate = SM::Time;
+					PrintDebug("[Hunting Data Collection] Pieces: %X, %X, %X\n", *(uint32_t *)&EmeraldManagerObj2->byte2C[0], *(uint32_t *)&EmeraldManagerObj2->byte2C[1], *(uint32_t *)&EmeraldManagerObj2->byte2C[2]);
 					for (int i = 0; i < 3; i++) {
 						oldemeralds[i] = getEmeraldId(i);
 					}
@@ -123,6 +129,22 @@ extern "C"
 				else {
 					nextstate = SM::Time;
 				}
+
+				// Check for emeralds
+				for (int i = 0; i < 3; i++) {
+					if (oldemeralds[i] != 0xFE && getEmeraldId(i) == 0xFE) {
+						PrintDebug("[Hunting Data Collection] Emerald %X collected at: ", oldemeralds[i]);
+
+						double ms_tmp = frameTime * 5.0 / 0.3;
+						int sec = ((int)ms_tmp / 1000) % 60;
+						int min = ((int)ms_tmp / (1000 * 60)) % 60;
+						int ms = (int)ms_tmp % 1000;
+
+						PrintDebug("[Hunting Data Collection]     Time %02d:%02d.%03d", min, sec, ms);
+						PrintDebug("[Hunting Data Collection]     IGT  %02d:%02d.%02d", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
+						PrintDebug("[Hunting Data Collection]     Frames: %d, %d", frameTime, (int)TimerFrames);
+					}
+					oldemeralds[i] = getEmeraldId(i);
 				}
 
 				// Frame time gets updated last for reasons lol
