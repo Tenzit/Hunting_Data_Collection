@@ -52,6 +52,7 @@ std::string GetLevelName() {
 
 static Data *data;
 char *LevelEnd = (char *)0x174B002;
+char *PopupMenus = (char *)0x021F0014;
 
 static SM oldstate;
 
@@ -72,6 +73,7 @@ extern "C"
 		static int oldFrameCount = 0;
 		static int frameTime = 0;
 		static int newFrameTime = 0;
+		static uint32_t oldemeralds[3];
 
 		switch (state) {
 			case SM::WaitLevel: {
@@ -96,6 +98,9 @@ extern "C"
 
 				if (ControllersEnabled && ((GameStates)GameState == GameStates_Ingame)) {
 					nextstate = SM::Time;
+					for (int i = 0; i < 3; i++) {
+						oldemeralds[i] = getEmeraldId(i);
+					}
 				}
 				else {
 					nextstate = SM::WaitLoadRestart;
@@ -105,18 +110,29 @@ extern "C"
 			case SM::Time: {
 				if (*LevelEnd == 1) {
 					nextstate = SM::Record;
+					break;
 				}
-
-				frameTime += (FrameCount - oldFrameCount);
-				newFrameTime += FrameIncrement;
 
 				// Menu Exit
 				if ((GameStates)GameState == GameStates_Inactive) {
 					nextstate = SM::WaitExit;
+					PrintDebug("[Hunting Data Collection] Transitioning to exit state");
+					// Break so that we don't crash on exit lol
+					break;
 				}
 				else {
 					nextstate = SM::Time;
 				}
+				}
+
+				// Frame time gets updated last for reasons lol
+				// Maybe the powers that be set the collection timer
+				// to TimerFrames-1 but if I update the frame timer
+				// before checking the piece collection, the time
+				// is off by one so we do this instead
+				frameTime += (FrameCount - oldFrameCount);
+				newFrameTime += FrameIncrement;
+
 				break;
 			}
 			case SM::Record: {
@@ -132,9 +148,9 @@ extern "C"
 				min = ((int)ms_tmp / (1000 * 60)) % 60;
 				ms = (int)ms_tmp % 1000;
 
-				PrintDebug("[Hunting Data Collection] Stage time v2: %02d:%d.%03d", min, sec, ms);
+				PrintDebug("[Hunting Data Collection] Stage time v2: %02d:%02d.%03d", min, sec, ms);
 
-				PrintDebug("[Hunting Data Collection] IGT: %d:%d.%d", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
+				PrintDebug("[Hunting Data Collection] IGT: %02d:%02d.%02d", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
 
 				nextstate = SM::WaitExit;
 				break;
