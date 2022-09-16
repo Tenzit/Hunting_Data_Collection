@@ -13,7 +13,8 @@ $^{1}$ Timing not guaranteed to be the exact same as LiveSplit, but it's typical
 
 ## Usage
 
-TODO once I upload a release
+Download the latest release from the [releases](https://github.com/Tenzit/Hunting_Data_Collection/releases) page.
+Extract the .zip into your SA2 mods directory and enable in the modloader
 
 Output is placed in `hunting_data.csv` in the mod directory
 
