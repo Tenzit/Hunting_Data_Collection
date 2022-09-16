@@ -55,6 +55,20 @@ uint32_t getEmeraldId(int idx) {
 	return *(uint32_t *)&EmeraldManagerObj2->byte2C[idx];
 }
 
+void PrintTime(int frames, std::string variant) {
+	double ms_tmp = frames * 5.0 / 0.3;
+	int sec = ((int)ms_tmp / 1000) % 60;
+	int min = ((int)ms_tmp / (1000 * 60)) % 60;
+	int ms = (int)ms_tmp % 1000;
+
+	PrintDebug("[Hunting Data Collection] %02d:%02d.%03d %s", min, sec, ms, variant.c_str());
+}
+
+inline void PrintIL() {
+	PrintDebug("[Hunting Data Collection] %02d:%02d.%03d IL", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
+}
+
+
 static Data *data;
 char *LevelEnd = (char *)0x174B002;
 char *PopupMenus = (char *)0x021F0014;
@@ -77,12 +91,18 @@ extern "C"
 		SM nextstate;
 		static int oldFrameCount = 0;
 		static int frameTime = 0;
+		static int frameTimeIGT = 0;
+		static int frameTimeV1 = 0;
+		static int frameTimeV2_5 = 0;
 		static int newFrameTime = 0;
 		static uint32_t oldemeralds[3];
 
 		switch (state) {
 			case SM::WaitLevel: {
 				frameTime = 0;
+				frameTimeIGT = 0;
+				frameTimeV1 = 0;
+				frameTimeV2_5 = 0;
 				newFrameTime = 0;
 				if (IsHuntingStage()) {
 					PrintDebug("[Hunting Data Collection] Is hunting stage\n");
@@ -134,15 +154,12 @@ extern "C"
 				for (int i = 0; i < 3; i++) {
 					if (oldemeralds[i] != 0xFE && getEmeraldId(i) == 0xFE) {
 						PrintDebug("[Hunting Data Collection] Emerald %X collected at: ", oldemeralds[i]);
+						PrintIL();
+						PrintTime(frameTimeIGT, "IGT");
+						PrintTime(frameTimeV1, "V1");
+						PrintTime(frameTimeV2_5, "V2.5");
 
-						double ms_tmp = frameTime * 5.0 / 0.3;
-						int sec = ((int)ms_tmp / 1000) % 60;
-						int min = ((int)ms_tmp / (1000 * 60)) % 60;
-						int ms = (int)ms_tmp % 1000;
 
-						PrintDebug("[Hunting Data Collection]     Time %02d:%02d.%03d", min, sec, ms);
-						PrintDebug("[Hunting Data Collection]     IGT  %02d:%02d.%02d", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
-						PrintDebug("[Hunting Data Collection]     Frames: %d, %d", frameTime, (int)TimerFrames);
 					}
 					oldemeralds[i] = getEmeraldId(i);
 				}
@@ -152,27 +169,49 @@ extern "C"
 				// to TimerFrames-1 but if I update the frame timer
 				// before checking the piece collection, the time
 				// is off by one so we do this instead
+
+				int frameDelta = max(0, FrameCount - oldFrameCount);
+				// Internet connection or controller disconnected
+				if (*PopupMenus == 117 || *PopupMenus == 123) {
+					; // Don't increment anything here lol
+				}
+				// Loading after dying
+				else if ((GameState == GameStates_LoadFinished || GameState == GameStates_Ingame) &&
+					     !ControllersEnabled) {
+					; // Don't increment here
+				}
+				// RestartLevel_NoLifeLost is dying
+				// Only want to look at TimerStopped here after the upgrade check
+				// As TimerStopped is set during upgrades
+				else if (GameState == GameStates_ReloadCharacter || GameState == GameStates_NormalRestart ||
+						 GameState == GameStates_RestartLevel_NoLifeLost || TimerStopped) {
+					frameTimeV2_5 += frameDelta;
+				}
+				// Upgrades only counted for V2.5
+				else if (!ControllerEnabled[0]) {
+					frameTimeV2_5 += frameDelta;
+				}
+				else if (GameState == GameStates_Pause) {
+					frameTimeV2_5 += frameDelta;
+					frameTimeV1 += frameDelta;
+				}
+				// Could check that we're in normal game state but this should be fine I guess
+				else if (GameState == GameStates_Ingame) {
+					frameTimeV2_5 += frameDelta;
+					frameTimeV1 += frameDelta;
+					frameTimeIGT += frameDelta;
+				}
 				frameTime += (FrameCount - oldFrameCount);
 				newFrameTime += FrameIncrement;
 
 				break;
 			}
 			case SM::Record: {
-				double ms_tmp = frameTime * 5.0 / 0.3;
-				int sec = ((int)ms_tmp / 1000) % 60;
-				int min = ((int)ms_tmp / (1000 * 60)) % 60;
-				int ms = (int)ms_tmp % 1000;
-
-				PrintDebug("[Hunting Data Collection] Stage time: %02d:%02d.%03d", min, sec, ms);
-
-				ms_tmp = newFrameTime * 5.0 / 0.3;
-				sec = ((int)ms_tmp / 1000) % 60;
-				min = ((int)ms_tmp / (1000 * 60)) % 60;
-				ms = (int)ms_tmp % 1000;
-
-				PrintDebug("[Hunting Data Collection] Stage time v2: %02d:%02d.%03d", min, sec, ms);
-
-				PrintDebug("[Hunting Data Collection] IGT: %02d:%02d.%02d", (int)TimerMinutes, (int)TimerSeconds, (int)((double)TimerFrames*5.0 / 0.3));
+				PrintDebug("[Hunting Data Collection] Stage finished at:");
+				PrintIL();
+				PrintTime(frameTimeIGT, "IGT");
+				PrintTime(frameTimeV1, "V1");
+				PrintTime(frameTimeV2_5, "V2.5");
 
 				nextstate = SM::WaitExit;
 				break;
