@@ -8,12 +8,12 @@
 
 #include <algorithm>
 #include <map>
-#include <set>
+#include <vector>
 
 bool IsHuntingStage() {
-	std::set<LevelIDs> huntingStages = { LevelIDs_WildCanyon, LevelIDs_PumpkinHill, LevelIDs_AquaticMine, LevelIDs_DeathChamber, LevelIDs_MeteorHerd,
+	std::vector<LevelIDs> huntingStages = { LevelIDs_WildCanyon, LevelIDs_PumpkinHill, LevelIDs_AquaticMine, LevelIDs_DeathChamber, LevelIDs_MeteorHerd,
 		LevelIDs_DryLagoon, LevelIDs_EggQuarters, LevelIDs_SecurityHall, LevelIDs_MadSpace };
-	if (huntingStages.find(*CurrentLevelE) != huntingStages.end()) {
+	if (find(huntingStages.begin(), huntingStages.end(), (LevelIDs)CurrentLevel) != huntingStages.end()) {
 		return true;
 	}
 	return false;
@@ -22,7 +22,7 @@ bool IsHuntingStage() {
 std::string IsNG() {
 	auto check = [](bool upgrade) { return (upgrade) ? " NG+" : " NG"; };
 
-	switch (*CurrentLevelE) {
+	switch ((LevelIDs)CurrentLevel) {
 		case LevelIDs_PumpkinHill: {
 			return check(KnucklesShovelClawGot);
 		}
@@ -47,11 +47,14 @@ std::string GetLevelName() {
 	std::map<LevelIDs, std::string> idToName = { {LevelIDs_WildCanyon, "Wild Canyon"}, {LevelIDs_PumpkinHill, "Pumpkin Hill"},
 		{LevelIDs_AquaticMine, "Aquatic Mine"}, {LevelIDs_DeathChamber, "Death Chamber"}, {LevelIDs_MeteorHerd, "Meteor Herd"},
 		{LevelIDs_DryLagoon, "Dry Lagoon"}, {LevelIDs_EggQuarters, "Egg Quarters"}, {LevelIDs_SecurityHall, "Security Hall"}, {LevelIDs_MadSpace, "Mad Space"} };
-
-	return idToName[*CurrentLevelE] + IsNG();
+	PrintDebug("[Hunting Data Collection] GetLevelName: %s", idToName.at((LevelIDs)CurrentLevel).c_str());
+	return idToName.at((LevelIDs)CurrentLevel) + IsNG();
 }
 
 static Data *data;
+char *LevelEnd = (char *)0x174B002;
+
+static SM oldstate;
 
 extern "C"
 {
@@ -75,6 +78,7 @@ extern "C"
 				else {
 					state = SM::WaitLevel;
 				}
+				break;
 			}
 			case SM::WaitLoadRestart: {
 				// Get name of stage we're loading into
@@ -83,15 +87,19 @@ extern "C"
 					data->stageName = GetLevelName();
 					PrintDebug("[Hunting Data Collection] Stage: %s\n", data->stageName);
 				}
+				break;
 			}
 			case SM::Time: {
 
+				break;
 			}
 			case SM::Record: {
 
+				break;
 			}
 			case SM::WaitExit: {
 			
+				break;
 			}
 		}
 	}
