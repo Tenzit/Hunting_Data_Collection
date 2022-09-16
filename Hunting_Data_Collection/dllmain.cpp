@@ -1,7 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
-#include "CastVars.h"
 #include "DataClass.h"
 #include "SA2Enums.h"
 #include "StateMachine.h"
