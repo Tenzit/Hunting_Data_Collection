@@ -1,6 +1,8 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
 
+#include "StateMachine.h"
+
 extern "C"
 {
 	__declspec(dllexport) void __cdecl Init(const char *path, const HelperFunctions &helperFunctions)
@@ -11,7 +13,25 @@ extern "C"
 
 	__declspec(dllexport) void __cdecl OnFrame()
 	{
+		static SM state = SM::WaitLevel;
 
+		switch (state) {
+			case SM::WaitLevel: {
+
+			}
+			case SM::WaitLoadRestart: {
+
+			}
+			case SM::Time: {
+
+			}
+			case SM::Record: {
+
+			}
+			case SM::WaitExit: {
+			
+			}
+		}
 	}
 
 	__declspec(dllexport) void __cdecl OnInput()
