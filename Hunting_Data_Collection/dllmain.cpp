@@ -89,18 +89,41 @@ extern "C"
 					data->stageName = GetLevelName();
 					PrintDebug("[Hunting Data Collection] Stage: %s\n", data->stageName.c_str());
 				}
+
+				if (ControllersEnabled && ((GameStates)GameState == GameStates_Ingame)) {
+					nextstate = SM::Time;
+				}
+				else {
+					nextstate = SM::WaitLoadRestart;
+				}
 				break;
 			}
 			case SM::Time: {
+				if (*LevelEnd == 1) {
+					nextstate = SM::Record;
+				}
 
+				// Menu Exit
+				if ((GameStates)GameState == GameStates_Inactive) {
+					nextstate = SM::WaitExit;
+				}
+				else {
+					nextstate = SM::Time;
+				}
 				break;
 			}
 			case SM::Record: {
 
+				nextstate = SM::WaitExit;
 				break;
 			}
 			case SM::WaitExit: {
-			
+				if ((LevelIDs)CurrentLevel == LevelIDs_BasicTest) {
+					nextstate = SM::WaitLevel;
+				}
+				else {
+					nextstate = SM::WaitExit;
+				}
 				break;
 			}
 		}
