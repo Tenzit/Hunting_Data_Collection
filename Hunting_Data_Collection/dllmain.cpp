@@ -63,20 +63,21 @@ extern "C"
 		// Executed at startup, contains helperFunctions and the path to your mod (useful for getting the config file.)
 		// This is where we override functions, replace static data, etc.
 		data = new Data();
+		oldstate = SM::WaitLevel;
 	}
 
 	__declspec(dllexport) void __cdecl OnFrame()
 	{
 		static SM state = SM::WaitLevel;
-		SM oldstate = state;
+		SM nextstate;
 
 		switch (state) {
 			case SM::WaitLevel: {
 				if (IsHuntingStage()) {
-					state = SM::WaitLoadRestart;
+					nextstate = SM::WaitLoadRestart;
 				}
 				else {
-					state = SM::WaitLevel;
+					nextstate = SM::WaitLevel;
 				}
 				break;
 			}
@@ -102,6 +103,8 @@ extern "C"
 				break;
 			}
 		}
+		oldstate = state;
+		state = nextstate;
 	}
 
 	__declspec(dllexport) void __cdecl OnInput()
